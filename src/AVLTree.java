@@ -180,7 +180,7 @@ public class AVLTree {
                 this.maxNode=currNode;
             }
         }
-        //reHeight(whereToInsertNode,1);//todo-change name
+        reHeight(whereToInsertNode,1);//todo-change name
         return rebalanceInsert(currNode);
     }
     private void reHeight(IAVLNode parent, int i) {
@@ -209,7 +209,7 @@ public class AVLTree {
             //promote(node);//todo-check that
 //            node.setSize(node.getSize()+1);
             //reSize(node,1);// todo-check if this is needed or only local change in hieght
-            updateHeight(node); //todo-check if needed here -05.12
+            //updateHeight(node); //todo-check if needed here -05.12
             return 0;//todo-check that
         }
         if (node.getParent()!=null) {
@@ -1042,7 +1042,8 @@ public class AVLTree {
 
     //    things to implement
     private void singleRightRotation(IAVLNode node, IAVLNode leftSonX) {
-
+        IAVLNode parent=node.getParent();
+        //todo-take care of rotations
         IAVLNode rightSonb = leftSonX.getRight();
         node.setParent(leftSonX);
         leftSonX.setRight(node);
