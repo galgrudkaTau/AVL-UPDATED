@@ -203,94 +203,96 @@ public class AVLTree {
     private int rebalanceInsert(IAVLNode node) {
         // this is where the rebalancing proccess is done
         // return the number of operation needed in order to maintain the AVL invariants.
+        int cnt=0;
         if (node==this.root){
-            return 0; //todo- check that
+            return cnt; //todo- check that
         }
-        if(isRebalancingInSertDone(node)){
+        if(isRebalancingInSertDone(node)) {
             //when the tree is balanced when we call the method
-            //promote(node);//todo-check that
-//            node.setSize(node.getSize()+1);
+            promote(node);//todo-check that
+            node.setSize(node.getSize()+1);
+            cnt++;
             //reSize(node,1);// todo-check if this is needed or only local change in hieght
             //updateHeight(node); //todo-check if needed here -05.12
-           // return 0;//todo-check that
-        }
-        if (node.getParent()!=null) {
-            // in order to check rank diff between node and his parent we need to make sure its not null
-            //}
-            // check insertion cases
-            IAVLNode parent = node.getParent();
-            String caseName = insertionCase(node);
-            switch (caseName) {
-                case "case1":
-                    // problem might moved up if so fix that- moving upward recursively
-                    updateSize(node);
-                    promote(parent);
-                    return 1+rebalanceInsert(parent);
-                case "case2left":
-                    //single right rotation & demote(z)--> re-balancing completed
-                    singleRightRotation(node);
-                    updateSize(parent); //z- right child now
-                    updateSize(node);//x-parent now
-                    demote(parent);
-                    return 2;
-                case "case3right":
-                    //single left rotation & demote(z)--> re-balancing completed
-                    singleLeftRotation(node);
-                    updateSize(parent); //z- left child now
-                    updateSize(node);//x-parent now
-                    demote(parent);
-                    return 2;
-                case "case2right":
-                    //double rotation: first right rotation (a-x) then left rotation (a-z)
-                    // & demote(x) ,demote(z), promote(a) & return +5
-                    IAVLNode leftSonA = node.getLeft();
-                    singleRightRotation(leftSonA);
-                    //after right rotation leftSonA become right son of parent
-                    singleLeftRotation(leftSonA);
-                    updateSize(parent);//z
-                    updateSize(node);//x
-                    updateSize(leftSonA);//a
-                    demote(parent);
-                    demote(node);
-                    promote(leftSonA);
-                    return 5;
-                case "case3left":
-                    //double rotation: first left rotation (x-b) then left rotation (b-z)
-                    // & demote(x) ,demote(z), promote(b) & return +5
-                    IAVLNode rightSonB = node.getRight();
-                    singleLeftRotation(rightSonB);
-                    // after left rotation leftSonB become left son of parent
-                    singleRightRotation(rightSonB);
-                    updateSize(parent);//z
-                    updateSize(node);//x
-                    updateSize(rightSonB);//b
-                    demote(parent);
-                    demote(node);
-                    promote(rightSonB);
-                    return 5;
-                case "caseJoinLeft":
-                    // when the subtree of x (after join) is a left subtree to nodeC
-                    // sol: right rotation x-c & promote(x)
-                    singleRightRotation(node); // node is the root of joined subtree of x
-                    updateSize(parent);//c
-                    updateSize(node);//x
-                    promote(node);
-                    return 2+rebalanceInsert(parent);
-                case "caseJoinRight":
-                    // special case for join
-                    // when the subtree of x (after join) is a right subtree to nodeC
-                    // sol: left rotation x-c & promote(x)
-                    singleLeftRotation(node);// node is the root of joined subtree of x
-                    updateSize(parent);//c
-                    updateSize(node);//x
-                    promote(node);
-                    return 2+rebalanceInsert(parent);
-                default:
-                    //todo-check that default case.
-                    break;
+            // return 0;//todo-check that
 
+            if (node.getParent() != null) {
+                // in order to check rank diff between node and his parent we need to make sure its not null
+                //}
+                // check insertion cases
+                IAVLNode parent = node.getParent();
+                String caseName = insertionCase(node);
+                switch (caseName) {
+                    case "case1":
+                        // problem might moved up if so fix that- moving upward recursively
+                        updateSize(node);
+                        promote(parent);
+                        cnt++;
+                        cnt+= rebalanceInsert(parent);
+                    case "case2left":
+                        //single right rotation & demote(z)--> re-balancing completed
+                        singleRightRotation(node);
+                        updateSize(parent); //z- right child now
+                        updateSize(node);//x-parent now
+                        demote(parent);
+                        cnt+=2;
+                        cnt+= rebalanceInsert(parent);
+                    case "case3right":
+                        //single left rotation & demote(z)--> re-balancing completed
+                        singleLeftRotation(node);
+                        updateSize(parent); //z- left child now
+                        updateSize(node);//x-parent now
+                        demote(parent);
+                        cnt+=2;
+                    case "case2right":
+                        //double rotation: first right rotation (a-x) then left rotation (a-z)
+                        // & demote(x) ,demote(z), promote(a) & return +5
+                        IAVLNode leftSonA = node.getLeft();
+                        singleRightRotation(leftSonA);
+                        //after right rotation leftSonA become right son of parent
+                        singleLeftRotation(leftSonA);
+                        updateSize(parent);//z
+                        updateSize(node);//x
+                        updateSize(leftSonA);//a
+                        demote(parent);
+                        demote(node);
+                        promote(leftSonA);
+                        cnt+=5;
+                    case "case3left":
+                        //double rotation: first left rotation (x-b) then left rotation (b-z)
+                        // & demote(x) ,demote(z), promote(b) & return +5
+                        IAVLNode rightSonB = node.getRight();
+                        singleLeftRotation(rightSonB);
+                        // after left rotation leftSonB become left son of parent
+                        singleRightRotation(rightSonB);
+                        updateSize(parent);//z
+                        updateSize(node);//x
+                        updateSize(rightSonB);//b
+                        demote(parent);
+                        demote(node);
+                        promote(rightSonB);
+                        cnt+= 5;
+                    case "caseJoinLeft":
+                        // when the subtree of x (after join) is a left subtree to nodeC
+                        // sol: right rotation x-c & promote(x)
+                        singleRightRotation(node); // node is the root of joined subtree of x
+                        updateSize(parent);//c
+                        updateSize(node);//x
+                        promote(node);
+                        cnt+=2;
+                    case "caseJoinRight":
+                        // special case for join
+                        // when the subtree of x (after join) is a right subtree to nodeC
+                        // sol: left rotation x-c & promote(x)
+                        singleLeftRotation(node);// node is the root of joined subtree of x
+                        updateSize(parent);//c
+                        updateSize(node);//x
+                        promote(node);
+                        cnt+=2;
+
+                }
             }
-        } return 0;
+        }return cnt;
         // TODO: 05/12/2021 check
     }
 
