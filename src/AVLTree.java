@@ -1041,45 +1041,68 @@ public class AVLTree {
 
 
     //    things to implement
-    private void singleRightRotation(AVLTree.IAVLNode leftSonX) {
+//    private void singleRightRotation(AVLTree.IAVLNode leftSonX) {
+//
+//        AVLTree.IAVLNode parent = leftSonX.getParent();
+//        AVLTree.IAVLNode RChild = leftSonX.getRight();
+//
+//        replacePointersOfParent(leftSonX, parent);
+//
+//        leftSonX.setRight(leftSonX.getParent());
+//        leftSonX.setParent(leftSonX.getParent());
+//
+//        parent.setParent(leftSonX);
+//        parent.setLeft(RChild);
+//        RChild.setParent(parent);
+//
+//    }
+    private void singleRightRotation(IAVLNode parent) {
+        IAVLNode LChild = parent.getLeft();// x
+        IAVLNode LRChild = parent.getLeft().getRight(); //b
+        IAVLNode parentOfParent = parent.getParent(); //if exists
+        replacePointersOfParent(parent, parentOfParent); //differ when root is involved
 
-        AVLTree.IAVLNode parent = leftSonX.getParent();
-        AVLTree.IAVLNode RChild = leftSonX.getRight();
-
-        replacePointers(leftSonX, parent);
-
-        leftSonX.setRight(leftSonX.getParent());
-        leftSonX.setParent(leftSonX.getParent());
-
-        parent.setParent(leftSonX);
-        parent.setLeft(RChild);
-        RChild.setParent(parent);
+        // the actual right rotation
+        LChild.setRight(parent);
+        parent.setParent(LChild);
+        parent.setLeft(LChild);
 
     }
 
     private void singleLeftRotation(IAVLNode parent) {
-        IAVLNode parentOfParent = parent.getParent();
-        IAVLNode RChild = parent.getRight();
+
+        IAVLNode RChild = parent.getRight();//x
         IAVLNode RLChild = parent.getRight().getLeft(); //a
+        IAVLNode parentOfParent = parent.getParent();
+        IAVLNode Lchild=parent.getLeft();
 
-        replacePointers(parent, parentOfParent);
+        replacePointersOfParent(parent, parentOfParent);//differ when root is involved
+//        parent.setLeft(parentOfParent); //
+//        parentOfParent.setRight(Lchild);
+//        Lchild.setParent(parentOfParent);
+//        parentOfParent.setParent(parent);
 
+        // the actual left rotation
         RChild.setLeft(parent);
         parent.setParent(RChild);
         parent.setRight(RLChild);
 
     }
 
-    private void replacePointers(IAVLNode son, IAVLNode parent) {
+    private void replacePointersOfParent(IAVLNode son, IAVLNode parent) {
         if(parent.getParent() == null){
+            //if the original parent (before rotation) is the root
             this.root = son;
             son.setParent(null);
         }
         else{
+            // the original parent has a parent --> not the root
             if(parent.getParent().getRight() == parent){
+                // if the parent is a right child
                 parent.getParent().setRight(son);
             }
             else {
+                // the parent is a ledt child
                 parent.getParent().setLeft(son);
             }
             son.setParent(parent.getParent());
