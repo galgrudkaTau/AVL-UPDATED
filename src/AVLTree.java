@@ -7,19 +7,25 @@ public class AVLTree {
     private final IAVLNode EXTERNALNODE = new AVLNode(-1, null, null, null, -1,0);
     protected IAVLNode maxNode; // pointer to the node with the maxNode key
     private IAVLNode minNode;
-    private int size;
 
+    /**
+     * public AVLTree()
+     * creates an empty AVLTree
+     * complexity - O(1)
+     */
     public AVLTree() {
         this.root=null;
-        this.size=-1;
         this.minNode=null;
         this.maxNode=null;
     }
-
+    /**
+     * public AVLTree(IAVLNode root)
+     * creates a AVLTree with only one node
+     * complexity - O(1)
+     */
     public AVLTree(IAVLNode root) { // build a leaf
         this.root = root;
         root.setParent(null);
-        this.size = this.root.getSize();
         this.maxNode = findMax();
         this.minNode = findMin();
     }
@@ -33,10 +39,17 @@ public class AVLTree {
         return this.root==null;
     }
 
+    /**
+     * private IAVLNode treePosition(IAVLNode nodeX, int k)
+     * searches the node with key of k in the tree.
+     * if exists, return -1
+     * else, return the last node the methode encountered
+     * complexity - O(logn)
+     */
     private IAVLNode treePosition(IAVLNode nodeX, int k) {
         //needs to be implemented
         IAVLNode posNode = null;
-        while (nodeX!=EXTERNALNODE && nodeX!=null){
+        while (nodeX.isRealNode() && nodeX!=null){
             posNode=nodeX;
             if (k==nodeX.getKey()){
                 return nodeX;
@@ -80,49 +93,49 @@ public class AVLTree {
      * Supposed to be used like enums, without creating new classes
      * return which case are we at currently, to ease on dealing with symmetrical cases while inserting node
      */
-    private String insertionCase(IAVLNode parent){
-        if (parent != null && parent.getParent() != null) {
-            int[] rankDifParent = rankDifference(parent);
-            int[] rankDiffParentofParent = rankDifference(parent.getParent());
-            if (((Arrays.equals(rankDifParent, new int[]{1, 1}) ||
-                    (Arrays.equals(rankDifParent, new int[]{2, 1})) ||
-                    (Arrays.equals(rankDifParent, new int[]{1, 2})))
-                    && (Arrays.equals(rankDiffParentofParent, new int[]{1, 0}) ||
-                    (Arrays.equals(rankDiffParentofParent, new int[]{0, 1}))))) {
+    private String insertionCase(IAVLNode currNode){
+        if (currNode != null && currNode.getParent() != null) {
+            int[] rankDifCurrNode = rankDifference(currNode);
+            int[] rankDiffParent = rankDifference(currNode.getParent());
+            if (((Arrays.equals(rankDifCurrNode, new int[]{1, 1}) ||
+                    (Arrays.equals(rankDifCurrNode, new int[]{2, 1})) ||
+                    (Arrays.equals(rankDifCurrNode, new int[]{1, 2})))
+                    && (Arrays.equals(rankDiffParent, new int[]{1, 0}) ||
+                    (Arrays.equals(rankDiffParent, new int[]{0, 1}))))) {
                 return "case1";
             }
             //single left rotation & demote(z)--> re-balancing completed return +2
-            else if (Arrays.equals(rankDiffParentofParent, new int[]{0, 2})
-                    && Arrays.equals(rankDifParent, new int[]{1, 2})) {
+            else if (Arrays.equals(rankDiffParent, new int[]{0, 2})
+                    && Arrays.equals(rankDifCurrNode, new int[]{1, 2})) {
                 return "case2left";
             }
             //double rotation: first right rotation (a-x) then left rotation (a-z)
             // & demote(x) ,demote(z), promote(a) & return +5 re-balancing completed
-            else if (Arrays.equals(rankDifParent, new int[]{1, 2})
-                    && Arrays.equals(rankDiffParentofParent, new int[]{2, 0})) {
+            else if (Arrays.equals(rankDifCurrNode, new int[]{1, 2})
+                    && Arrays.equals(rankDiffParent, new int[]{2, 0})) {
                 return "case2right";
             }
             //double rotation: first left rotation (x-b) then left rotation (b-z)
             // & demote(x) ,demote(z), promote(b) & return +5 re-balancing completed
-            else if (Arrays.equals(rankDifParent, new int[]{2, 1})
-                    && Arrays.equals(rankDiffParentofParent, new int[]{0, 2})) {
+            else if (Arrays.equals(rankDifCurrNode, new int[]{2, 1})
+                    && Arrays.equals(rankDiffParent, new int[]{0, 2})) {
                 return "case3left";
             }
 
             //single left rotation & demote(z)--> re-balancing completed return +2
-            else if (Arrays.equals(rankDifParent, new int[]{2, 1})
-                    && Arrays.equals(rankDiffParentofParent, new int[]{2, 0})) {
+            else if (Arrays.equals(rankDifCurrNode, new int[]{2, 1})
+                    && Arrays.equals(rankDiffParent, new int[]{2, 0})) {
                 return "case3right";
             }
             // special cases for join method
-            else if (Arrays.equals(rankDifParent, new int[]{1, 1})
-                    && Arrays.equals(rankDiffParentofParent, new int[]{0, 2})) {
+            else if (Arrays.equals(rankDifCurrNode, new int[]{1, 1})
+                    && Arrays.equals(rankDiffParent, new int[]{0, 2})) {
                 return "caseJoinLeft"; // special case for join
                 // when the subtree of x (after join) is a left subtree to nodeC
                 // sol: right rotation x-c & promote(x)
             }
-            else if (Arrays.equals(rankDifParent, new int[]{1, 1})
-                    && Arrays.equals(rankDiffParentofParent, new int[]{2, 0})) {
+            else if (Arrays.equals(rankDifCurrNode, new int[]{1, 1})
+                    && Arrays.equals(rankDiffParent, new int[]{2, 0})) {
                 return "caseJoinRight"; // special case for join
                 // when the subtree of x (after join) is a right subtree to nodeC
                 // sol: left rotation x-c & promote(x)
@@ -140,7 +153,7 @@ public class AVLTree {
      * A promotion/rotation counts as one re-balance operation, double-rotation is counted as 2.
      * Returns -1 if an item with key k already exists in the tree.
      */
-    public int insert(int k, String i) { // TODO: 06/12/2021 insert
+    public int insert(int k, String i) {
         if(this.empty()){
             // if this is the first insert we should update its fields
             IAVLNode firstNode = new AVLNode(k, i, EXTERNALNODE, EXTERNALNODE, 0,1);
@@ -151,7 +164,6 @@ public class AVLTree {
         }
         IAVLNode whereToInsertNode = treePosition(this.root, k); // comment that O(logn)
         int keyLastPos=whereToInsertNode.getKey();
-        // TODO: 04/12/2021 create constructor
         IAVLNode currNode = new AVLNode(k, i, EXTERNALNODE, EXTERNALNODE, 0,1);
         if (keyLastPos == k) // if the node exists in the tree
             return -1;
@@ -184,124 +196,106 @@ public class AVLTree {
                 this.maxNode=currNode;
             }
         }
-//        reHeight(whereToInsertNode,1);//todo-change name
-        return rebalanceInsert(currNode); // TODO: 07/12/2021 changes to currNode instead of whereToInsertNode
-    }
-    private void reHeight(IAVLNode parent, int i) {
-        while(parent != null) {
-            updateHeight(parent);
-            parent = parent.getParent();
-        }
+
+        return rebalanceInsert(currNode);
     }
 
-    //    private int maxHeight(IAVLNode leftNode,IAVLNode rightNode) {
-//        if (leftNode.getHeight()>= rightNode.getHeight()){
-//            return leftNode.getHeight();
-//        }
-//        else {
-//            return rightNode.getHeight();
-//        }
-//    }
     private int rebalanceInsert(IAVLNode currNode) {
         // this is where the rebalancing proccess is done
         // return the number of operation needed in order to maintain the AVL invariants.
-        int cnt=0;
-//        if (node==this.root){
-//            return cnt; //todo- check that
-//        }
-//        if(isRebalancingInSertDone(node)) {
-//            //when the tree is balanced when we call the method
-//            if (isUnary(parentOfInsertedNode)) {
-//                promote(parentOfInsertedNode);//todo-check that
-//                //            node.setSize(node.getSize()+1);
-//                cnt++;
-//            }
-//            //reSize(node,1);// todo-check if this is needed or only local change in hieght
-//            //updateHeight(node); //todo-check if needed here -05.12
-//            // return 0;//todo-check that
+        int counter=0;
+
         String caseName = insertionCase(currNode);
         if (currNode.getParent() != null) {
             // in order to check rank diff between node and his parent we need to make sure its not null
             //}
             // check insertion cases
-//                IAVLNode parentOfParent = currNode.getParent(); todo parent of all pointer
 
             switch (caseName) {
                 case "case1":
                     // problem might moved up if so fix that- moving upward recursively
-                    updateSize(currNode);
+                    sizeCalc(currNode);
                     promote(currNode.getParent());
-                    cnt++;
-                    cnt+= rebalanceInsert(currNode.getParent());
-                case "case2left": //2right
+                    counter++;
+                    counter+= rebalanceInsert(currNode.getParent());
+                    break;
+                case "case2left":
                     //single right rotation & demote(z)--> re-balancing completed
                     IAVLNode parent = currNode.getParent();
                     singleRightRotation(currNode);
-                    updateSize(parent); //z- right child now
+                    sizeCalc(parent); //z- right child now
                     updateSize(currNode);//x-parent now
                     demote(parent);
-                    cnt+=2;
-                case "case3right": //2left
+                    counter+=2;
+                    break;
+                case "case3right":
                     //single left rotation & demote(z)--> re-balancing completed
                     IAVLNode parentx = currNode.getParent(); //cur parent
-                    singleLeftRotation(currNode); //todo- check w/ hila  i changed to currNode  //cur - /
-                    updateSize(parentx); //z- left child now
+                    singleLeftRotation(currNode); //cur
+//                this.bfs_print();
+                    sizeCalc(parentx); //z- left child now
                     updateSize(currNode);//x-parent now
                     demote(parentx);
-                    cnt+=2;
-                case "case2right": //3right // todo- start from here.
+                    counter+=2;
+                    break;
+                case "case2right":
                     //double rotation: first right rotation (a-x) then left rotation (a-z)
                     // & demote(x) ,demote(z), promote(a) & return +5
                     IAVLNode parentxx = currNode.getParent(); // z
-                    IAVLNode leftSonA = currNode.getLeft();
-                    singleRightRotation(currNode);
+                    IAVLNode leftSonA = currNode.getLeft(); //a
+                    singleRightRotation(leftSonA); //a
                     //after right rotation leftSonA become right son of parent
-                    singleLeftRotation(currNode);
-                    updateSize(parentOfParent);//z
-                    updateSize(currNode);//x
+                    singleLeftRotation(leftSonA); //a
+                    sizeCalc(parentxx);//z
+                    sizeCalc(currNode);//x
                     updateSize(leftSonA);//a
                     demote(parentxx);
                     demote(currNode);
                     promote(leftSonA);
-                    cnt+=5;
+                    counter+=5;
+                    break;
                 case "case3left":
                     //double rotation: first left rotation (x-b) then left rotation (b-z)
                     // & demote(x) ,demote(z), promote(b) & return +5
                     IAVLNode parentxxx = currNode.getParent(); // z
-                    IAVLNode rightSonB = currNode.getRight();
-                    singleLeftRotation(currNode);
+                    IAVLNode rightSonB = currNode.getRight(); //b
+                    singleLeftRotation(rightSonB);
                     // after left rotation leftSonB become left son of parent
-                    singleRightRotation(currNode);
-                    updateSize(parentOfParent);//z
-                    updateSize(currNode);//x
+                    singleRightRotation(rightSonB);
+                    sizeCalc(parentxxx);//z
+                    sizeCalc(currNode);//x
                     updateSize(rightSonB);//b
                     demote(parentxxx);
                     demote(currNode);
                     promote(rightSonB);
-                    cnt+= 5;
-                case "caseJoinLeft": //4right
+                    counter+= 5;
+                    break;
+                case "caseJoinLeft":
                     // when the subtree of x (after join) is a left subtree to nodeC
                     // sol: right rotation x-c & promote(x)
-                    singleRightRotation(parentOfParent); // node is the root of joined subtree of x
-                    updateSize(parentOfParent);//c
+                    IAVLNode parentxxxx = currNode.getParent(); // c
+                    singleRightRotation(currNode); // node is the root of joined subtree of x
+                    sizeCalc(parentxxxx);//c
                     updateSize(currNode);//x
                     promote(currNode);
-                    cnt+=2;
-                case "caseJoinRight": //4left
+                    counter+=2;
+                    counter += rebalanceInsert(currNode.getParent());
+                    break;
+                case "caseJoinRight":
                     // special case for join
                     // when the subtree of x (after join) is a right subtree to nodeC
                     // sol: left rotation x-c & promote(x)
-                    singleLeftRotation(parentOfParent);// node is the root of joined subtree of x
-                    updateSize(parentOfParent);//c
+                    IAVLNode parentxxxxx = currNode.getParent(); // c
+                    singleLeftRotation(currNode);// node is the root of joined subtree of x
+                    sizeCalc(parentxxxxx);//c
                     updateSize(currNode);//x
                     promote(currNode);
-                    cnt+=2;
-
+                    counter+=2;
+                    counter += rebalanceInsert(currNode.getParent());
+                    break;
             }
         }
-//        }
-        return cnt;
-        // TODO: 05/12/2021 check
+        return counter;
     }
 
     private void demote(IAVLNode node) {
@@ -324,77 +318,72 @@ public class AVLTree {
         // check cases of right / left child outside
         // TODO: 04/12/2021 create arrays one time in order to save in space complexity
         int[] rankDiffParent = rankDifference(parent);
-        int[] rankDiffRChild = rankDifference(parent.getRight());
-        int[] rankDiffLChild = rankDifference(parent.getLeft());
-
-//      check if node is right or left son and replace with External node + return 0
-//        if ((Arrays.equals(rankDiffParent, new int[]{2, 1}) || (Arrays.equals(rankDiffParent, new int[]{1, 2})) &&
-//                (parent.getLeft().isRealNode() && !parent.getRight().isRealNode()) ||
-//                (!parent.getLeft().isRealNode() && parent.getRight().isRealNode()))) {
-//            return "case0";
-//        }
-//        demote(z)
         if (Arrays.equals(rankDiffParent, new int[]{2, 2})) {
             return "case1";
         }
-        //      rotation left on z-y, promote(y) demote(z)
-        //      return 3 + rebalance (parent)
-        //      parent is Unary
-        if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
-                (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffRChild, new int[]{1, 1}))))) {
-            return "case2right";
+
+        if (parent.getLeft().isRealNode()){
+            int[] rankDiffLChild = rankDifference(parent.getLeft());
+//      rotation right on z-y, promote(y) demote(z)
+            //      return 3 + rebalance (parent)
+            if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
+//                    (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffLChild, new int[]{1, 1}))))) {
+                return "case2left";
+            }
+            //      rotation right on z-y, 2xdemote(z)
+            //      return 3 + rebalance (parent)
+            if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
+//                    (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffLChild, new int[]{1, 2}))))) {
+                return "case3left";
+            }
+            //      rotation left on y-a, rotation right on a-z, 2xdemote(z), demote(y), promote(a)
+            //      return 6 + rebalance (parent)
+            if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
+//                    (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffLChild, new int[]{2, 1}))))) {
+                return "case4left";
+            }
         }
-        //      rotation right on z-y, promote(y) demote(z)
-        //      return 3 + rebalance (parent)
-        if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
-                (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffLChild, new int[]{1, 1}))))) {
-            return "case2left";
-        }
-        //      rotation left on z-y, 2xdemote(z)
-        //      return 3 + rebalance (parent)
-        if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
-                (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffRChild, new int[]{2, 1}))))) {
-            return "case3right";
-        }
-        //      rotation right on z-y, 2xdemote(z)
-        //      return 3 + rebalance (parent)
-        if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
-                (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffLChild, new int[]{1, 2}))))) {
-            return "case3left";
-        }
-        //      rotation right on y-a, rotation left on a-z, 2xdemote(z), demote(y), promote(a)
-        //      return 6 + rebalance (parent)
-        if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
-                (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffRChild, new int[]{1, 2}))))) {
-            return "case4right";
-        }
-        //      rotation left on y-a, rotation right on a-z, 2xdemote(z), demote(y), promote(a)
-        //      return 6 + rebalance (parent)
-        if (((Arrays.equals(rankDiffParent, new int[]{1, 3}) &&
-                (!parent.getRight().isRealNode()) && (parent.getLeft().isRealNode()) &&
-                (Arrays.equals(rankDiffLChild, new int[]{2, 1}))))) {
-            return "case4left";
+        if (parent.getRight().isRealNode()){
+            int[] rankDiffRChild = rankDifference(parent.getRight());
+            //      rotation left on z-y, promote(y) demote(z)
+            //      return 3 + rebalance (parent)
+            //      parent is Unary
+            if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
+//                    (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffRChild, new int[]{1, 1}))))) {
+                return "case2right";
+            }
+
+            //      rotation left on z-y, 2xdemote(z)
+            //      return 3 + rebalance (parent)
+            if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
+//                    (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffRChild, new int[]{2, 1}))))) {
+                return "case3right";
+            }
+
+            //      rotation right on y-a, rotation left on a-z, 2xdemote(z), demote(y), promote(a)
+            //      return 6 + rebalance (parent)
+            if (((Arrays.equals(rankDiffParent, new int[]{3, 1}) &&
+//                    (parent.getRight().isRealNode()) && (!parent.getLeft().isRealNode()) &&
+                    (Arrays.equals(rankDiffRChild, new int[]{1, 2}))))) {
+                return "case4right";
+            }
         }
         return "";
     }
 
     private void deleteLeaf(IAVLNode nodeToDelete) {
         IAVLNode parent = nodeToDelete.getParent();
-//		if(parent == null) { // size is 1
-//			this.root = null;
-//		}else {
         if (parent.getRight() == nodeToDelete) { // delete right child
             parent.setRight(EXTERNALNODE);
         } else { // delete left child
             parent.setLeft(EXTERNALNODE);
         }
     }
-//	}
 
     /**
      * public int delete(int k)
@@ -406,7 +395,7 @@ public class AVLTree {
      * Returns -1 if an item with key k was not found in the tree.
      */
     public int delete(int k) {
-        // maybe use switch case in order to make it a recursion
+        int counter = 0;
         if(this.empty()){
             return -1; // the item wasnt found in tree because its empty
         }
@@ -423,42 +412,43 @@ public class AVLTree {
             } else {
                 if(nodeToDelete.isLeaf()){
                     deleteLeaf(nodeToDelete);
-                    // TODO: 04/12/2021 check if we don't do reSize twice
                     if (parent!=null){
                         reSize(parent,-1);
                     }
-                }else {
+                    counter = rebalanceDelete(nodeToDelete.getParent());
+                }
+                else {
                     if (isUnary(nodeToDelete)){
                         if (nodeToDelete == this.root){
                             this.root = this.findSuccessor(nodeToDelete);
                         }
-                        deleteUnary(nodeToDelete);// todo-hila did check the above condition
-                        // TODO: 04/12/2021 check if we don't do reSize twice
+                        deleteUnary(nodeToDelete);
                         if (parent!=null){
                             reSize(parent,-1);
                         }
                         if(parent==null){ // nodeToDelete is the root so parent is null
                             //since we change the root to be the only son of the original root than
                             // size in new root is updated
-                            return 0;// no rebalancing was needed (before delete the tree was balanced)
+                            counter = 0;// no rebalancing was needed (before delete the tree was balanced)
                         }
+                        counter = rebalanceDelete(nodeToDelete.getParent());
                     }else {
                         IAVLNode replace = replaceWithSuccessor(nodeToDelete);
-                        // TODO: 04/12/2021 check if we don't do reSize twice
                         if (replace!=null){
                             reSize(replace, -1);
                         }
+                        counter = rebalanceDelete(replace);
                     }
                 }
             }
         }
         if (nodeToDelete.getKey() == this.minNode.getKey()){
-            this.minNode = findMin();
+            this.minNode = findSuccessor(this.minNode);
         }
         if (nodeToDelete.getKey() == this.maxNode.getKey()){
-            this.maxNode = findMin();
+            this.maxNode =findMax();
         }
-        return rebalanceDelete(parent);
+        return counter;
     }
 
     private IAVLNode findSuccessor(IAVLNode nodeToDelete) {
@@ -470,18 +460,15 @@ public class AVLTree {
             return successor;
         }else{
             IAVLNode successor = nodeToDelete.getParent();
-            while (nodeToDelete!=null){
-                if (nodeToDelete.getKey()>successor.getKey()){
-                    return successor;
-                }
-                successor = successor.getParent();
+            while (nodeToDelete.isRealNode() && nodeToDelete == successor.getRight()){
+                nodeToDelete = successor;
+                successor = nodeToDelete.getParent();
             }
+            return successor;
         }
-        return null;
     }
 
     private boolean isUnary(IAVLNode nodeToDelete) {
-        //todo-check that if works fine
         return (((!nodeToDelete.getRight().isRealNode()) && nodeToDelete.getLeft().isRealNode())
                 || (nodeToDelete.getRight().isRealNode() && !nodeToDelete.getLeft().isRealNode()));
     }
@@ -538,7 +525,6 @@ public class AVLTree {
                 }
             }
         }
-
     }
 
     private IAVLNode replaceWithSuccessor(IAVLNode nodeToDelete) {
@@ -582,77 +568,83 @@ public class AVLTree {
     private int rebalanceDelete(IAVLNode parent) {
         int counter=0;
         String caseNum = deletetionCase(parent);
-        if (!caseNum.equals("")) {
-
+        if (!caseNum.equals("")) { // not "case0" = no need to rebalance
             switch (caseNum) {
-//                case ("case0"):
-//                    return 0;
                 case ("case1"):
                     demote(parent);
-                    sizeCalc(parent);
                     counter++;
-                case ("case2right"):
-                    IAVLNode right = parent.getRight();
-                    singleLeftRotation(parent);
-                    promote(right);
-                    demote(parent);
-                    updateSize(parent);
-                    updateSize(right);
-                    counter+=3;
-                case ("case2left"):
-                    IAVLNode left = parent.getLeft();
-                    singleRightRotation(parent);
-                    promote(left);
-                    demote(parent);
-                    updateSize(parent);
-                    updateSize(left);
-                    counter+=3;
-                case ("case3right"):
-                    IAVLNode rightSon = parent.getRight();
-                    singleLeftRotation(parent);
-                    demote(parent); //z
-                    demote(parent); //z
-                    updateSize(parent); //z
-                    updateSize(rightSon); //y
-                    counter+=3;
                     counter += rebalanceDelete(parent.getParent());
+                    break;
+                case ("case2right"):
+                    IAVLNode RChild = parent.getRight();
+                    singleLeftRotation(parent.getRight());
+                    promote(RChild); //y
+                    demote(parent); //z
+                    sizeCalc(parent);
+                    updateSize(RChild);
+                    counter+=3;
+                    break;
+                case ("case2left"):
+                    IAVLNode LChild = parent.getLeft();
+                    singleRightRotation(parent.getLeft());
+                    promote(LChild); //y
+                    demote(parent); //z
+                    sizeCalc(parent);
+                    updateSize(LChild);
+                    counter+=3;
+                    break;
+                case ("case3right"):
+                    IAVLNode rchild = parent.getRight();
+                    singleLeftRotation(parent.getRight());
+                    demote(parent); //z
+                    demote(parent); //z
+                    sizeCalc(parent); //z
+                    updateSize(rchild); //y
+                    counter+=3;
+                    counter += rebalanceDelete(parent.getParent().getParent()); // parent of z is parent of y
+                    break;
                 case ("case3left"):
                     IAVLNode LeftSon = parent.getLeft();
-                    singleRightRotation(parent);
+                    singleRightRotation(parent.getLeft());
                     demote(parent); //z
                     demote(parent); //z
-                    updateSize(parent); //z
+                    sizeCalc(parent); //z
                     updateSize(LeftSon); //y
                     counter+=3;
-                    counter += rebalanceDelete(parent.getParent());
+                    counter += rebalanceDelete(parent.getParent().getParent()); // parent of z is parent of y
+                    break;
                 case ("case4right"):
                     IAVLNode RightSon = parent.getRight(); //y
                     IAVLNode RightLeftSon = RightSon.getLeft(); //a
-                    singleRightRotation(parent); //y-a
-                    singleLeftRotation(parent); //a-z
+                    singleRightRotation(parent.getRight().getLeft()); //y-a
+                    this.bfs_print();
+                    singleLeftRotation(RightLeftSon); //a-z
+                    this.bfs_print();
                     demote(parent); //z
                     demote(parent); //z
                     demote(RightSon); //y
                     promote(RightLeftSon); //a
-                    updateSize(parent); //z
-                    updateSize(RightSon); //y
+                    sizeCalc(parent); //z
+                    sizeCalc(RightSon); //y
                     updateSize(RightLeftSon); //a
                     counter+=6;
-                    counter += rebalanceDelete(parent.getParent());
+                    counter += rebalanceDelete(parent.getParent().getParent());
+                    break;
                 case ("case4left"):
                     IAVLNode Lson = parent.getLeft(); //y
                     IAVLNode LRSon = Lson.getRight(); //a
-                    singleLeftRotation(parent); //y-a
-                    singleRightRotation(parent); //a-z
+                    singleLeftRotation(parent.getLeft().getRight()); //y-a
+                    singleRightRotation(LRSon); //a-z
                     demote(parent); //z
                     demote(parent); //z
                     demote(Lson); //y
                     promote(LRSon); //a
-                    updateSize(parent); //z
-                    updateSize(Lson); //y
+                    sizeCalc(parent); //z
+                    sizeCalc(Lson); //y
                     updateSize(LRSon); //a
                     counter+=6;
-                    counter += rebalanceDelete(parent.getParent());
+                    counter += rebalanceDelete(parent.getParent().getParent());
+                    break;
             }
         }
         return counter;
@@ -692,7 +684,7 @@ public class AVLTree {
      * or null if the tree is empty.
      */
     public IAVLNode findMin()
-    {//todo- check viability
+    {
         if (this.empty()){
             return null;
         }
@@ -729,7 +721,6 @@ public class AVLTree {
     public IAVLNode findMax() {
         //todo-check viability
 //        using a pointer to maxNode node for O(1)
-//        return this.max;
         if (this.empty()){
             return null;
         }
@@ -740,15 +731,15 @@ public class AVLTree {
         return currNode;
     }
 
-    private void KeysToArrayRecHelper(IAVLNode root,int[] keysArray, int pos) {
-        if(root != null && root.isRealNode() && root != EXTERNALNODE && pos < keysArray.length) {
-            KeysToArrayRecHelper(root.getLeft(), keysArray, pos);
-            keysArray[pos] = root.getKey();// insert curr root in the corresponding pos
-            pos++;
-            KeysToArrayRecHelper(root.getRight(), keysArray, pos);// todo- check if pos+1 is needed
-//			return keysArray;//check
+    private int KeysToArrayRecHelper(IAVLNode node,int[] keysArray, int pos) {
+        if(!node.isRealNode()) {
+            return pos;
+        }else {
+            pos = KeysToArrayRecHelper(node.getLeft(),keysArray,pos);
+            keysArray[pos++]=node.getKey();
+            pos = KeysToArrayRecHelper(node.getRight(),keysArray,pos);
         }
-//		return keysArray;// missing return statement error
+        return pos;
     }
 
     /**
@@ -766,14 +757,15 @@ public class AVLTree {
         KeysToArrayRecHelper(this.root,keysArray,0);
         return keysArray;
     }
-    private void infoToArrayRecHelper(IAVLNode root,String[] keysArray, int pos) {
-        if(root != null && root.isRealNode() && root != EXTERNALNODE && pos < keysArray.length) {
-            infoToArrayRecHelper(root.getLeft(), keysArray, pos);
-            keysArray[pos] = root.getValue();// insert curr root in the corresponding pos
-            pos++;
-            infoToArrayRecHelper(root.getRight(), keysArray, pos);// todo- check if pos+1 is needed
-//			return keysArray;//check
+    private int infoToArrayRecHelper(IAVLNode node,String[] infoArray, int pos) {
+        if(!node.isRealNode()) {
+            return pos;
+        }else {
+            pos = infoToArrayRecHelper(node.getLeft(),infoArray,pos);
+            infoArray[pos++]=node.getValue();
+            pos = infoToArrayRecHelper(node.getRight(),infoArray,pos);
         }
+        return pos;
     }
 
     /**
@@ -801,8 +793,6 @@ public class AVLTree {
         if (!empty()){
             return root.getSize();
         }
-        //todo- gal- write sideUpdate method
-        // update size field during tree functions
         return -1;
     }
 
@@ -835,7 +825,7 @@ public class AVLTree {
         if (whereTosplit.getKey() == minNode.getKey()){
             biggerSubT.minNode = findSuccessor(minNode);
         }
-        if (whereTosplit.getKey() == minNode.getKey()){
+        if (whereTosplit.getKey() == maxNode.getKey()){
             smallerSubT.maxNode = smallerSubT.findMax();
         }
         if (node.getRight().isRealNode()){
@@ -846,14 +836,12 @@ public class AVLTree {
         }
 
         while(parent != null) {
-            if (node == parent.getRight()) {
+            if (node == parent.getRight()) { // node is where to split
                 // parent and left tree is smaller than x
                 node = parent;
                 parent = parent.getParent();
-
                 if (node.getLeft().isRealNode()) {
                     treeToJoin = new AVLTree(node.getLeft());
-
                 } else {
                     treeToJoin = new AVLTree();
                 }
@@ -861,11 +849,12 @@ public class AVLTree {
                 node.setLeft(this.EXTERNALNODE);
                 node.setRight(this.EXTERNALNODE);
                 node.setHeight(0);
+                node.setSize(1);
                 smallerSubT.join(node, treeToJoin);
             } else {
                 node = parent;
                 parent = parent.getParent();
-                if (node.getRight().getHeight() != -1) {
+                if (node.getRight().isRealNode()) {
                     treeToJoin = new AVLTree(node.getRight());
                 } else {
                     treeToJoin = new AVLTree();
@@ -874,6 +863,7 @@ public class AVLTree {
                 node.setLeft(this.EXTERNALNODE);
                 node.setRight(this.EXTERNALNODE);
                 node.setHeight(0);
+                node.setSize(1);
                 biggerSubT.join(node, treeToJoin);
             }
         }
@@ -903,9 +893,7 @@ public class AVLTree {
             //we should insert x as regular insert to this
             this.insert(x.getKey(), x.getValue());// t is empty we insert to this as regular
             //during insert size,min,max is updated
-//            this.minNode=this.minNode.getKey()>x.getKey() ? x:this.minNode;
-//            this.maxNode=this.maxNode.getKey()<x.getKey() ? x:this.maxNode;
-            return this.getRoot().getHeight() + 2;//todo-comeback
+            return this.getRoot().getHeight() + 2; //1-(-1)=2
 
         } else if (this.empty()) {
             //only this is empty -this is empty and t isnt
@@ -915,8 +903,7 @@ public class AVLTree {
             //during insert size is updated and min &max of t
             this.minNode=t.minNode;
             this.maxNode=t.maxNode;
-
-            return this.getRoot().getHeight() + 2;
+            return this.getRoot().getHeight() + 2; //1-(-1)=2
         }
         //both of them are not empty
         int rankThisRoot = this.getRoot().getHeight();
@@ -929,13 +916,11 @@ public class AVLTree {
             if (isThisbiggerKeys) {
                 currNode = findInsertPos(this.root, 'L', rankThisRoot, rankTRoot); //b
                 connect(currNode, x, t.root, 'L');
-                updateHeight(x);
                 sizeCalc(x);//x
                 sizeCalc(currNode.getParent());//c
             } else { //  keys(this)< x < keys(t)
                 currNode = findInsertPos(this.root, 'R', rankThisRoot, rankTRoot);
                 connect(currNode, x, t.root, 'R');
-                updateHeight(x);
                 sizeCalc(x);//x
                 sizeCalc(currNode.getParent());//c
             }
@@ -956,21 +941,16 @@ public class AVLTree {
                 max=t.maxNode;
                 connect(x, this.root, t.root);// t should be the right son since his keys are bigger
             }
-
-            updateHeight(x);// x rank should be k+1
             sizeCalc(x);//x
             this.root = x;// we join to this then we should update its root
             this.minNode=min;
             this.maxNode=max;
-
-
         }
         else {  // if <0 this is lower
             if (isThisbiggerKeys){
                 // keys(this) > x > keys(t)
                 currNode=findInsertPos(t.root,'R',rankTRoot,rankThisRoot);
                 connect(currNode,x,this.root,'R');
-                updateHeight(x);
                 sizeCalc(x);//x
                 sizeCalc(currNode.getParent());//c
             }
@@ -978,7 +958,6 @@ public class AVLTree {
                 // keys(this) < x < keys(t)
                 currNode= findInsertPos(t.root,'L',rankTRoot,rankThisRoot);
                 connect(currNode,x,this.root,'L');
-                updateHeight(x);
                 sizeCalc(x);//x
                 sizeCalc(currNode.getParent());//c
             }
@@ -992,16 +971,6 @@ public class AVLTree {
             t.rebalanceInsert(x);
             this.root=t.root; // we want to join x and t to this tree;
         }
-        //todo-set max,min,size-did it only to check
-//        reSize(x,1);//update sizes from the connection point upwards to root.
-//        this.minNode=this.findMin();
-//        this.maxNode=this.findMax();
-
-        //this.minNode=this.minNode.getKey() > t.minNode.getKey()? t.minNode : this.minNode;
-        // if this.maxNode.key < t.maxNode.key then this.maxNode=t.maxNode
-        // else this.maxNode = this.maxNode
-        //this.maxNode=this.maxNode.getKey() <t.maxNode.getKey() ? t.maxNode : this.maxNode;
-
         // if the tree-this is higher than rankDiff are rankThisRoot-rankTRoot+1
         // otherwise, rankDiff are rankTRoot-rankThisRoot+1
         return checkRanksDiff>0 ? rankThisRoot-rankTRoot+1: rankTRoot-rankThisRoot+1;
@@ -1061,24 +1030,6 @@ public class AVLTree {
         return currNode;
     }
 
-
-
-    //    things to implement
-//    private void singleRightRotation(AVLTree.IAVLNode leftSonX) {
-//
-//        AVLTree.IAVLNode parent = leftSonX.getParent();
-//        AVLTree.IAVLNode RChild = leftSonX.getRight();
-//
-//        replacePointersOfParent(leftSonX, parent);
-//
-//        leftSonX.setRight(leftSonX.getParent());
-//        leftSonX.setParent(leftSonX.getParent());
-//
-//        parent.setParent(leftSonX);
-//        parent.setLeft(RChild);
-//        RChild.setParent(parent);
-//
-//    }
     private void singleRightRotation(IAVLNode currNode) {
         IAVLNode RChild = currNode.getRight();
         IAVLNode currNodeParent = currNode.getParent();
@@ -1087,67 +1038,23 @@ public class AVLTree {
         // currNode becomes root instead of currNodeParent
 //        begins rotations
         currNode.setParent(currNodeParent.getParent()); // W is parent of X
-        currNode.setRight(currNode.getParent()); // TODO: 07/12/2021 maybe change order
+        currNode.setRight(currNodeParent);
         currNodeParent.setParent(currNode); // X is parent of Z
         currNodeParent.setLeft(RChild); // b is left child of Z
-        RChild.setParent(currNodeParent); // z is parent of b
+        RChild.setParent(currNodeParent); // z is father of b
     }
 
-    private void singleLeftRotation(IAVLNode currNode) { // todo maybe parent of parent
-            IAVLNode Lchild=currNode.getLeft();
-            IAVLNode currNodeParent = currNode.getParent();
-
+    private void singleLeftRotation(IAVLNode currNode) {
+        IAVLNode Lchild=currNode.getLeft();
+        IAVLNode currNodeParent = currNode.getParent();
         replacePointersOfParent(currNode);
-        // currNode becomes root instead of currNodeParent
-        // the actual rotation here:
+//        // currNode becomes root instead of currNodeParent
+//        // the actual rotation here:
         currNode.setParent(currNodeParent.getParent()); // W is the parent of X
-        currNode.setLeft(currNode.getParent());
+        currNode.setLeft(currNodeParent);
         currNodeParent.setParent(currNode); // X is parent of Z
         currNodeParent.setRight(Lchild); // a is a right chilf of Z
         Lchild.setParent(currNodeParent); // z is parent of b
-
-
-//        IAVLNode RChild=parent.getRight();//x
-//        IAVLNode RLChild=parent.getRight().getLeft();//a
-//        IAVLNode parentOfParent=parent.getParent();
-//        IAVLNode Lchild=parent.getLeft();
-//
-//        replacePointersOfParent(parent,parentOfParent);//differwhenrootisinvolved
-//        parent.setLeft(parentOfParent);//
-//        parentOfParent.setRight(Lchild);
-//        Lchild.setParent(parentOfParent);
-//        parentOfParent.setParent(parent);
-//        IAVLNode parentLeft = parent.getLeft();
-//        IAVLNode parentParent = parent.getParent();
-//        IAVLNode RChild=parent.getRight();
-//        IAVLNode RLChild=parent.getRight().getLeft();
-//
-////        replacePointersOfParent(parent);
-//        if(parentParent == null) { // parent of 16 is null
-//            this.root = RChild; // root becomes 24
-//            RChild.setParent(null); // 24 is root so parent is null
-//        }else{ //parent has a parent
-//            if(parentParent.getRight() == parent){ //w.right is z
-//                parent.setLeft(parent);
-//            }
-//            else {
-//                parent.setRight(parent);
-//            }
-//        }
-//        RChild.setLeft(parent); // 24.left becomes 16
-//        parent.setRight(RLChild); // 16.right becomes 24.left
-////        parent.setLeft(parent.getParent());
-//        parent.setParent(parent.getRight());
-////        parentParent.setParent(parent);
-//        parentParent.setRight(parentLeft);
-////        parentLeft.setParent(parentParent);
-
-
-//        // the actual left rotation
-//        RChild.setLeft(parent);
-//        parent.setParent(RChild);
-//        parent.setRight(RLChild);
-
     }
 
     private void replacePointersOfParent(IAVLNode currNode) {
@@ -1161,14 +1068,6 @@ public class AVLTree {
                 currNodeParent.getParent().setRight(currNode); // X is now right child of Z's father instead of Z
             }
         }
-    }
-
-    private boolean isRebalancingInSertDone(IAVLNode parent){
-        if(parent.getHeight()-parent.getLeft().getHeight()==1 && parent.getHeight()-parent.getRight().getHeight()==1){
-            //case in which the rebalancing is not done.
-            return false;
-        }
-        return true;
     }
     //todo-added print funcionality is here -delete later
 
@@ -1349,14 +1248,7 @@ public class AVLTree {
         private IAVLNode left;
         private IAVLNode right;
         private int height;
-        private int size; // TODO: 05/12/2021 check if is good
-
-//	public AVLNode(int key, String value){
-//		// if is leaf
-//		this.key=key;
-//		this.info=value;
-//		this.height = 1;
-//	}
+        private int size;
 
         public AVLNode(int key, String value, IAVLNode right, IAVLNode left, int height, int size){
             this.key=key;
@@ -1367,7 +1259,6 @@ public class AVLTree {
             this.size = size;
         }
 
-        // TODO: 04/12/2021 update constructor for ExtrenalLeaf
         public int getKey() {
             return this.key;
         }
@@ -1419,5 +1310,4 @@ public class AVLTree {
             return this.getRight().getHeight() == -1 && this.getLeft().getHeight() == -1;
         }
     }
-
 }
