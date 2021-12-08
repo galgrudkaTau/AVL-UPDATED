@@ -5,7 +5,7 @@ import java.util.Queue;//todo-delete this
 public class AVLTree {
     private IAVLNode root;
     private final IAVLNode EXTERNALNODE = new AVLNode(-1, null, null, null, -1,0);
-    protected IAVLNode maxNode; // pointer to the node with the maxNode key
+    private IAVLNode maxNode; // pointer to the node with the maxNode key
     private IAVLNode minNode;
 
     /**
